@@ -1,6 +1,6 @@
 { pkgs }:
 let
-  rustVersion = (pkgs.rust-bin.fromRustupToolchainFile ../rust-toolchain.toml);
+  rustVersion = pkgs.rust-bin.fromRustupToolchainFile ../rust-toolchain.toml;
   rustPlatform = pkgs.makeRustPlatform {
     cargo = rustVersion;
     rustc = rustVersion;
@@ -15,20 +15,23 @@ let
     compile-deps = callPackage ./compile-deps.nix { };
     rust-shell =
       # llvm-tools-preview for code coverage with cargo-llvm-cov
-      (rustVersion.override { extensions = [ "rust-src" "rust-analyzer" "llvm-tools-preview"]; });
-
+      rustVersion.override {
+        extensions = [ "rust-src" "rust-analyzer" "llvm-tools-preview" ];
+      };
 
     # contains all rust crates in workspace.members of Cargo.toml
-    roc-full = (callPackage ./builder.nix { }).roc-release;
-    roc-full-debug = (callPackage ./builder.nix { }).roc-debug;
-
-    roc-lang-server = (callPackage ./builder.nix { subPackage = "language_server"; }).roc-release;
-    roc-lang-server-debug = (callPackage ./builder.nix { subPackage = "language_server"; }).roc-debug;
-
-    # only the CLI crate = executable provided in nightly releases
-    roc-cli = (callPackage ./builder.nix { subPackage = "cli"; }).roc-release;
-    roc-cli-debug = (callPackage ./builder.nix { subPackage = "cli"; }).roc-debug;
+    full = callPackage ./builder.nix { };
+    full-debug = callPackage ./builder.nix { buildType = "debug"; };
+    language-server =
+      callPackage ./builder.nix { subPackage = "language_server"; };
+    language-server-debug = callPackage ./builder.nix {
+      subPackage = "language_server";
+      buildType = "debug";
+    };
+    cli = callPackage ./builder.nix { subPackage = "cli"; };
+    cli-debug = callPackage ./builder.nix {
+      subPackage = "cli";
+      buildType = "debug";
+    };
   };
-
-in
-packages
+in packages
